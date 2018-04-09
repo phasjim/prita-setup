@@ -6,6 +6,7 @@ for file in $(ls ${HOME}/.bash/*.sh);
 done
 
 ## Source stuff from engineering/.bash
+source /usr/local/etc/bash_completion.d/git-prompt.sh
 
 ## Shell stuff
 export HISTCONTROL=ignoredups
@@ -39,11 +40,7 @@ prompt_function() {
     git_color="${PURPLE}"
   fi
 
-  #PS1="${RESET}\u@\h: \w${git_color}$(__git_ps1)${RESET}\$ "
-
-  #PS1="${RESET}\u@\h:${git_color}$(__git_ps1)${RESET} \w\$ "
-
-  PS1="${RESET}\u@\h:${git_color}$(__git_ps1)${RESET} \W \$ "
+  export PS1="${RESET}\u@\h:${git_color}$(__git_ps1)${RESET} \W \$ "
 }
 
 ## Aliases
