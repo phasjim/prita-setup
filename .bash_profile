@@ -1,43 +1,106 @@
-# Load the shell dotfiles, and then some:
-# * ~/.path can be used to extend `$PATH`.
-# * ~/.extra can be used for other settings you don’t want to commit.
-for file in ~/.{path,bash_prompt,exports,aliases,functions,extra}; do
-	[ -r "$file" ] && [ -f "$file" ] && source "$file";
-done;
-unset file;
+#.bashrc
 
-# Case-insensitive globbing (used in pathname expansion)
-shopt -s nocaseglob;
+## Source stuff from .bash
+for file in $(ls ${HOME}/.bash/*.sh);
+  do source $file;
+done
 
-# Append to the Bash history file, rather than overwriting it
-shopt -s histappend;
+## Source stuff from engineering/.bash
 
-# Autocorrect typos in path names when using `cd`
-shopt -s cdspell;
+## Shell stuff
+export HISTCONTROL=ignoredups
+export HISTIGNORE="&:ls:ll:la:l.:pwd:exit:clear"
 
-# Enable some Bash 4 features when possible:
-# * `autocd`, e.g. `**/qux` will enter `./foo/bar/baz/qux`
-# * Recursive globbing, e.g. `echo **/*.txt`
-for option in autocd globstar; do
-	shopt -s "$option" 2> /dev/null;
-done;
+## Environment
+export PATH="/usr/local/bin:/usr/local/sbin:$PATH"
+export DISPLAY=:0.0
+export EDITOR='subl -w'
+export PROMPT_COMMAND='prompt_function'
 
-# Add tab completion for many Bash commands
-if [ -f $(brew --prefix)/etc/bash_completion ]; then
-  . $(brew --prefix)/etc/bash_completion
-fi
+## GIT
+prompt_function() {
+  local        BLUE='\[\033[0;34m\]'
+  local         RED='\[\033[0;31m\]'
+  local   LIGHT_RED='\[\033[1;31m\]'
+  local        CYAN='\[\033[0;36m\]'
+  local LIGHT_GREEN='\[\033[1;32m\]'
+  local      YELLOW='\[\033[0;33m\]'
+  local       WHITE='\[\033[1;37m\]'
+  local  LIGHT_GRAY='\[\033[0;37m\]'
+  local        GRAY='\[\033[1;30m\]'
+  local       RESET='\[\033[0m\]'
+  local TITLE_START='\[\033]0;'
+  local   TITLE_END='\007\]'
+  local      PURPLE='\[\033[0;35m\]'
 
-# Enable tab completion for `g` by marking it as an alias for `git`
-if type _git &> /dev/null && [ -f /usr/local/etc/bash_completion.d/git-completion.bash ]; then
-	complete -o default -o nospace -F _git g;
-fi;
+  if test $(git status 2> /dev/null | grep -c :) -eq 0; then
+    git_color="${CYAN}"
+  else
+    git_color="${PURPLE}"
+  fi
 
-# Add tab completion for SSH hostnames based on ~/.ssh/config, ignoring wildcards
-[ -e "$HOME/.ssh/config" ] && complete -o "default" -o "nospace" -W "$(grep "^Host" ~/.ssh/config | grep -v "[?*]" | cut -d " " -f2- | tr ' ' '\n')" scp sftp ssh;
+  #PS1="${RESET}\u@\h: \w${git_color}$(__git_ps1)${RESET}\$ "
 
-# Add tab completion for `defaults read|write NSGlobalDomain`
-# You could just use `-g` instead, but I like being explicit
-complete -W "NSGlobalDomain" defaults;
+  #PS1="${RESET}\u@\h:${git_color}$(__git_ps1)${RESET} \w\$ "
 
-# Add `killall` tab completion for common apps
-complete -o "nospace" -W "Contacts Calendar Dock Finder Mail Safari iTunes SystemUIServer Terminal Twitter" killall;
+  PS1="${RESET}\u@\h:${git_color}$(__git_ps1)${RESET} \W \$ "
+}
+
+## Aliases
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+alias ll='ls -la'
+alias la='ls -A'
+alias l='ls -CF'
+alias slq='mysql'
+
+## History
+bind '"\e[A": history-search-backward'
+bind '"\e[B": history-search-forward'
+set show-all-if-ambiguous on
+set completion-ignore-case on
+
+## colors
+export CLICOLOR=1
+export LSCOLORS=gxcxhxahFeeghxfecgfxcx
+## export LSCOLORS=dxfxcxdxbxegedabagacad
+
+## functions
+extract () {
+  if [ -f $1 ] ; then
+    case $1 in
+      *.tar.bz2)          tar xjf $1          ;;
+      *.tar.gz)           tar xzf $1          ;;
+      *.bz2)              bunzip2 $1          ;;
+      *.rar)              unrar x $1          ;;
+      *.gz)               gunzip $1           ;;
+      *.tar)              tar xf $1           ;;
+      *.tbz2)             tar xjf $1          ;;
+      *.tgz)              tar xzf $1          ;;
+      *.zip)              unzip $1            ;;
+      *.Z)                uncompress $1       ;;
+      *)                  echo "'$1' cannot be extracted via extract()" ;;
+    esac
+  else
+    echo "'$1' is not a valid file"
+  fi
+}
+
+grab() {
+  sudo chown -R ${USER} ${1:-.}
+}
+
+psgrep() {
+  if [ ! -z $1 ] ; then
+    echo "Grepping for processes matching $1..."
+    ps aux | grep $1 | grep -v grep
+  else
+    echo "!! Need name to grep for"
+  fi
+}
+
+fixlines () {
+  /usr/bin/perl -pi~ -e 's/\r\n?/\n/g' "$@" ;
+}
+export PATH="/usr/local/opt/curl/bin:$PATH"
